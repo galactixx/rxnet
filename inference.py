@@ -35,7 +35,9 @@ if __name__ == "__main__":
         vocab=model_config.vocab,
     )
     # Restore weights from checkpoint and move to the active device
-    model.load_state_dict(torch.load("rxnet.pth", map_location=device))
+    model.load_state_dict(
+        torch.load("rxnet.pth", map_location=device, weights_only=True)
+    )
     model.to(device)
 
     model.eval()
