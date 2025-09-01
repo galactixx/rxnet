@@ -9,9 +9,25 @@ pairs for next-character prediction.
 
 import unicodedata
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import pandas as pd
+
+
+@dataclass(frozen=True)
+class ModelConfig:
+    """Container for model configuration like context, hidden layer widths,
+    and vocabulary size
+
+    Attributes:
+        context (int): Size of the left context window.
+        hidden (Tuple[int, int]): Hidden layer widths.
+        vocab (int): Vocabulary size.
+    """
+
+    context: int
+    hidden: Tuple[int, int]
+    vocab: int
 
 
 @dataclass(frozen=True)
@@ -73,6 +89,14 @@ class RxNormDataConfig:
             KeyError: If any character is not present in `char_to_id`.
         """
         return [self.char_to_id[char] for char in context]
+
+
+def load_model_config(config: RxNormDataConfig) -> ModelConfig:
+    """Load model configuration from data config."""
+    CONTEXT = 7
+    hidden = (20 * CONTEXT, 15 * CONTEXT)
+    vocab = len(config.vocab)
+    return ModelConfig(context=CONTEXT, hidden=hidden, vocab=vocab)
 
 
 def load_rxnorm_data() -> RxNormDataConfig:

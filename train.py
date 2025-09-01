@@ -18,11 +18,10 @@ from torch.utils.data import DataLoader, Dataset
 from torch_ema import ExponentialMovingAverage
 from tqdm import tqdm
 
-from data import ContextPair, RxNormDataConfig, load_rxnorm_data
+from data import ContextPair, RxNormDataConfig, load_model_config, load_rxnorm_data
 from rxnet import RxNet
 
 SEED = 42
-CONTEXT = 7
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -46,7 +45,7 @@ def preprocessing(config: RxNormDataConfig) -> List[ContextPair]:
         length = len(name)
         idx = 0
         # Initialize the left context with start tokens.
-        context = config.encode(context="^" * CONTEXT)
+        context = config.encode(context="^" * config.context)
 
         while idx < length:
             target = name[idx]
@@ -110,6 +109,8 @@ def evaluate(
 if __name__ == "__main__":
 
     config = load_rxnorm_data()
+    model_config = load_model_config(config=config)
+
     pairs = preprocessing(config=config)
 
     targets = [pair.target for pair in pairs]
@@ -164,8 +165,12 @@ if __name__ == "__main__":
     no_improve, best_loss = 0, float("inf")
 
     # Hidden layer widths scale with context size.
-    hidden = (20 * CONTEXT, 15 * CONTEXT)
-    model = RxNet(context=CONTEXT, hidden=hidden, vocab=len(config.vocab))
+
+    model = RxNet(
+        context=model_config.context,
+        hidden=model_config.hidden,
+        vocab=model_config.vocab,
+    )
     model.to(device)
 
     optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
